@@ -13,8 +13,16 @@ const Home: NextPage = () => {
   const idInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleGetUsers = () => {
-    handleClick();
+    // handleClick();
     fetch("api/read")
+      .then((res) => res.json())
+      .then((res) => {
+        console.log("got these users: ", res);
+      });
+  };
+
+  const handleGetUsersDb = () => {
+    fetch("api/read-db")
       .then((res) => res.json())
       .then((res) => {
         console.log("got these users: ", res);
@@ -70,10 +78,10 @@ const Home: NextPage = () => {
     setId(idInput);
   };
 
-  const handleClick = () => {
-    console.log(nameInputRef.current?.value);
-    console.log(emailInputRef.current?.value);
-  };
+  // const handleClick = () => {
+  //   console.log(nameInputRef.current?.value);
+  //   console.log(emailInputRef.current?.value);
+  // };
 
   return (
     <div className={styles.container}>
@@ -94,6 +102,7 @@ const Home: NextPage = () => {
           Id: <input ref={idInputRef} onChange={handleInput} />
         </div>
         <button onClick={handleGetUsers}>Get Users</button>{" "}
+        <button onClick={handleGetUsersDb}>Get Users From Database</button>{" "}
         <button onClick={handleCreateUsers}>Create User</button>{" "}
         <button onClick={handleDeleteUser}>Delete User</button>{" "}
       </main>
