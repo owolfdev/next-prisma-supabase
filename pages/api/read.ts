@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getUsers } from "../../helpers/prisma-helper";
+import { getUsers } from "../../lib/prisma-helper";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   async function main() {

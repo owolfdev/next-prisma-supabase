@@ -1,19 +1,41 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
-const Home: NextPage = () => {
+import { makeSerializable } from "../lib/utils";
+
+import { PrismaClient, User } from "@prisma/client";
+const prisma = new PrismaClient();
+
+interface Props {
+  users: User[];
+}
+
+const Home: React.FC<Props> = (props) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [id, setId] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
-  const nameInputRef = React.useRef<HTMLInputElement>(null);
-  const emailInputRef = React.useRef<HTMLInputElement>(null);
-  const idInputRef = React.useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    console.log(selectedUsers);
+  }, [selectedUsers]);
+
+  useEffect(() => {
+    console.log(props.users);
+  }, [props.users]);
+
+  useEffect(() => {
+    setUsers(props.users);
+  }, []);
+
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const emailInputRef = useRef<HTMLInputElement>(null);
+  const idInputRef = useRef<HTMLInputElement>(null);
 
   const handleGetUsers = () => {
-    // handleClick();
     fetch("api/read")
       .then((res) => res.json())
       .then((res) => {
@@ -26,10 +48,11 @@ const Home: NextPage = () => {
       .then((res) => res.json())
       .then((res) => {
         console.log("got these users: ", res);
+        setUsers(res);
       });
   };
 
-  const handleCreateUsers = () => {
+  const handleCreateUser = () => {
     console.log(
       "create a user with the name of:",
       name,
@@ -49,6 +72,8 @@ const Home: NextPage = () => {
       .then((res) => res.json())
       .then((res) => {
         console.log("this user created: ", res);
+        const usersArray = [...users, res];
+        setUsers(usersArray);
       });
   };
 
@@ -67,6 +92,22 @@ const Home: NextPage = () => {
       });
   };
 
+  const handleDeleteUsers = () => {
+    console.log("delete users with ids of:", selectedUsers);
+    const data = {
+      selectedUsers: selectedUsers,
+    };
+    fetch("api/delete-many", {
+      method: "DELETE",
+      body: JSON.stringify(data),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        console.log("deleted this user: ", res);
+        handleGetUsersDb();
+      });
+  };
+
   const handleInput = () => {
     const nameInput: string = nameInputRef.current?.value!;
     setName(nameInput);
@@ -78,10 +119,20 @@ const Home: NextPage = () => {
     setId(idInput);
   };
 
-  // const handleClick = () => {
-  //   console.log(nameInputRef.current?.value);
-  //   console.log(emailInputRef.current?.value);
-  // };
+  const handleCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(e.target.id);
+    if (e.target.checked) {
+      console.log("checked");
+      const checkedItems = [...selectedUsers, e.target.id];
+      setSelectedUsers(checkedItems);
+    } else {
+      console.log("not checked");
+      const checkedItems = selectedUsers.filter((userId) => {
+        return userId !== e.target.id;
+      });
+      setSelectedUsers(checkedItems);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -103,11 +154,38 @@ const Home: NextPage = () => {
         </div>
         <button onClick={handleGetUsers}>Get Users</button>{" "}
         <button onClick={handleGetUsersDb}>Get Users From Database</button>{" "}
-        <button onClick={handleCreateUsers}>Create User</button>{" "}
+        <button onClick={handleCreateUser}>Create User</button>{" "}
         <button onClick={handleDeleteUser}>Delete User</button>{" "}
+        <div className="checkList">
+          <div className="title">Your CheckList:</div>
+          <div className="list-container">
+            {users.map((user, index) => (
+              <div key={index}>
+                <input
+                  value={user.name?.toString()}
+                  type="checkbox"
+                  onChange={handleCheck}
+                  id={user.id?.toString()}
+                />
+                <span>{user.name?.toString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <button onClick={handleDeleteUsers}>Delete Selected Users</button>{" "}
       </main>
     </div>
   );
 };
 
 export default Home;
+
+export async function getStaticProps() {
+  const res = await prisma.user.findMany();
+  const users: User[] = res;
+  console.log(users);
+
+  return {
+    props: { users: makeSerializable(users) },
+  };
+}

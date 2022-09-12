@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { deleteUser } from "../../helpers/prisma-helper";
+import { deleteUser } from "../../lib/prisma-helper";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const req_body = JSON.parse(req.body);

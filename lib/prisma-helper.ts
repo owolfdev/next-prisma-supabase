@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 
 export async function getUsers() {
   const users = await prisma.user.findMany();
+  console.log("from prisma helper, getUsers, users:", users);
   return users;
 }
 
@@ -34,5 +35,29 @@ export async function deleteUser(req_body: DeleteUser) {
       id: id,
     },
   });
+  return deletedUser;
+}
+
+interface DeleteUsers {
+  selectedUsers: number[];
+}
+export async function deleteUsers(req_body: DeleteUsers) {
+  const userIdsStrings = req_body.selectedUsers;
+  //console.log("from prisma helper user ids", userIds);
+  const userIds = userIdsStrings.map((str) => {
+    return Number(str);
+  });
+
+  const deletedUser = await prisma.user.deleteMany({
+    where: {
+      id: { in: userIds },
+    },
+  });
+
+  // const deletedUsers = userIds.map((id) => {
+  //   const deletedUser = deleteUser(id);
+  //   return deletedUser;
+  // });
+
   return deletedUser;
 }
